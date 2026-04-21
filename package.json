@@ -1,0 +1,12 @@
+{
+  "name": "lexicon-vocabulary-app",
+  "version": "1.0.0",
+  "description": "A Cambridge-inspired personal vocabulary builder with flashcard study mode",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "keywords": ["vocabulary", "flashcards", "english", "learning"],
+  "author": "Your Name",
+  "license": "MIT"
+}

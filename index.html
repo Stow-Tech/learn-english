@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Lexicon — Vocabulary Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- ═══════════════ SPLASH / WELCOME SCREEN ═══════════════ -->
+    <div class="splash" id="splash">
+        <div class="splash-inner">
+            <div class="splash-logo">L</div>
+            <h1 class="splash-title">Lexicon</h1>
+            <p class="splash-subtitle">A Personal Vocabulary Builder</p>
+            <div class="splash-divider"></div>
+            <p class="splash-desc">
+                Expand your command of the English language.<br>
+                Add words, study meanings, and master your vocabulary<br>
+                through intelligent flashcard revision.
+            </p>
+            <button class="splash-btn" onclick="enterApp()">Begin Study Session</button>
+            <p class="splash-version">Cambridge-Inspired Edition &nbsp;·&nbsp; v1.0</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════ MAIN APP ═══════════════ -->
+    <div class="app hidden" id="app">
+
+        <!-- HEADER -->
+        <header class="site-header">
+            <div class="header-inner">
+                <div class="header-brand">
+                    <span class="brand-logo">L</span>
+                    <div>
+                        <h1 class="brand-name">Lexicon</h1>
+                        <p class="brand-tagline">Personal Vocabulary Builder</p>
+                    </div>
+                </div>
+                <nav class="header-nav">
+                    <button class="nav-btn active" onclick="showSection('words')">Word List</button>
+                    <button class="nav-btn" onclick="startFlashcards()">Study Cards</button>
+                </nav>
+            </div>
+        </header>
+
+        <main class="main-content">
+
+            <!-- HERO STATS BAR -->
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalWords">0</span>
+                    <span class="stat-label">Words Added</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number" id="todayWords">0</span>
+                    <span class="stat-label">Added Today</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number" id="masteredWords">0</span>
+                    <span class="stat-label">Mastered</span>
+                </div>
+            </div>
+
+            <!-- ADD WORD PANEL -->
+            <section class="panel add-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Add New Entry</h2>
+                    <p class="panel-subtitle">Record a new word and its definition to your personal lexicon</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label" for="wordInput">English Word</label>
+                        <input class="form-input" id="wordInput" type="text"
+                               placeholder="e.g. Ephemeral" autocomplete="off"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="meaningInput">Definition</label>
+                        <input class="form-input" id="meaningInput" type="text"
+                               placeholder="e.g. Lasting for a very short time"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="exampleInput">Example Sentence <span class="optional">(optional)</span></label>
+                        <input class="form-input" id="exampleInput" type="text"
+                               placeholder="e.g. Fame in this industry is ephemeral."/>
+                    </div>
+                    <div class="form-group form-group--action">
+                        <button class="btn btn--primary" onclick="addWord()">
+                            <span class="btn-icon">+</span> Add to Lexicon
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- WORD LIST PANEL -->
+            <section class="panel list-panel" id="wordsSection">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">My Vocabulary <span class="word-badge" id="wordCount">0</span></h2>
+                        <p class="panel-subtitle">Your personal collection of words and definitions</p>
+                    </div>
+                    <div class="panel-actions">
+                        <input class="search-input" id="searchInput" type="text"
+                               placeholder="Search words..." oninput="filterWords()"/>
+                        <button class="btn btn--secondary" onclick="startFlashcards()">
+                            🃏 Study Flashcards
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="word-table">
+                        <thead>
+                            <tr>
+                                <th class="th-word">Word</th>
+                                <th class="th-meaning">Definition</th>
+                                <th class="th-example">Example</th>
+                                <th class="th-status">Status</th>
+                                <th class="th-action">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr class="empty-row">
+                                <td colspan="5">
+                                    <div class="empty-state">
+                                        <div class="empty-icon">📖</div>
+                                        <p class="empty-title">Your lexicon is empty</p>
+                                        <p class="empty-sub">Begin by adding your first word above</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+        <footer class="site-footer">
+            <p>Lexicon &copy; 2025 &nbsp;·&nbsp; Cambridge-Inspired Vocabulary Builder &nbsp;·&nbsp; All entries saved locally</p>
+        </footer>
+
+    </div>
+
+    <!-- ═══════════════ FLASHCARD MODAL ═══════════════ -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal-box">
+
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Flashcard Study Session</h2>
+                    <p class="modal-subtitle" id="deckInfo">Loading deck...</p>
+                </div>
+                <button class="close-btn" onclick="closeFlashcards()">✕</button>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-track">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Card -->
+            <div class="card-scene" onclick="flipCard()">
+                <div class="flashcard" id="flashcard">
+                    <div class="card-face card-front">
+                        <span class="card-tag">Word</span>
+                        <h2 class="card-word" id="frontText"></h2>
+                        <p class="card-hint">Click the card to reveal the definition</p>
+                    </div>
+                    <div class="card-face card-back">
+                        <span class="card-tag">Definition</span>
+                        <p class="card-meaning" id="backText"></p>
+                        <p class="card-example" id="backExample"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="modal-controls">
+                <button class="ctrl-btn" id="prevBtn" onclick="prevCard()">← Previous</button>
+                <span class="card-counter" id="counter">1 / 1</span>
+                <button class="ctrl-btn" id="nextBtn" onclick="nextCard()">Next →</button>
+            </div>
+
+            <div class="modal-footer">
+                <button class="tool-btn" onclick="shuffleCards()">🔀 Shuffle</button>
+                <button class="tool-btn" onclick="markMastered()">✓ Mark as Mastered</button>
+                <button class="tool-btn" onclick="resetDeck()">↺ Restart</button>
+            </div>
+
+            <p class="keyboard-hint">
+                ← → Navigate &nbsp;|&nbsp; Space / Enter to Flip &nbsp;|&nbsp; M to Mark Mastered &nbsp;|&nbsp; Esc to Close
+            </p>
+
+        </div>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div class="notification" id="notif"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
