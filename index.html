@@ -340,7 +340,8 @@
     const SUPABASE_URL  = 'https://rciqjzagiekcxqspwsjh.supabase.co';
 const SUPABASE_KEY  = 'sb_publishable_dJnBt674Jrikr2ubgIB_Rg_lt8bxI0D';
 
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     /* ── STATE ── */
     let words     = [];
