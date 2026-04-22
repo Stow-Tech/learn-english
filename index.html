@@ -337,8 +337,8 @@
        🔑 SUPABASE CONFIG
        Replace with YOUR keys from supabase.com
     ══════════════════════════════════════ */
-    const SUPABASE_URL  = 'https://xyzxyz.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6...';
+    const SUPABASE_URL  = 'https://rciqjzagiekcxqspwsjh.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_dJnBt674Jrikr2ubgIB_Rg_lt8bxI0D';
 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -370,7 +370,7 @@ const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6...';
     async function loadWords() {
         showLoading(30);
         const { data, error } = await db
-            .from('words')
+            .from('word')
             .select('*')
             .order('id', { ascending: false });
 
