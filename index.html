@@ -7,203 +7,612 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --navy: #1a2744; --navy-mid: #223060; --blue: #2e4a9e;
+            --gold: #b8972a; --gold-light: #d4af47;
+            --cream: #f5f2ea; --cream-dark: #ebe6d8; --white: #ffffff;
+            --grey-2: #9ca3af; --grey-3: #e5e7eb;
+            --text-dark: #1c2340; --text-mid: #374151; --text-light: #6b7280;
+            --success: #2d6a4f; --danger: #9b1d20;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-sans: 'Source Sans 3', 'Segoe UI', sans-serif;
+            --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.16);
+            --transition: all 0.25s ease;
+        }
+        html { font-size: 16px; scroll-behavior: smooth; }
+        body { font-family: var(--font-sans); background: var(--cream); color: var(--text-dark); min-height: 100vh; line-height: 1.6; }
+        .hidden { display: none !important; }
+
+        /* SPLASH */
+        .splash { position: fixed; inset: 0; background: var(--navy); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.7s ease, visibility 0.7s ease; }
+        .splash.fade-out { opacity: 0; visibility: hidden; }
+        .splash-inner { text-align: center; padding: 40px 30px; max-width: 540px; }
+        .splash-logo { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--navy); font-family: var(--font-serif); font-size: 2.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 8px 30px rgba(184,151,42,0.35); }
+        .splash-title { font-family: var(--font-serif); font-size: 3.4rem; color: var(--white); letter-spacing: 3px; margin-bottom: 6px; }
+        .splash-subtitle { font-size: 0.95rem; color: var(--gold-light); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 28px; }
+        .splash-divider { width: 60px; height: 2px; background: var(--gold); margin: 0 auto 28px; }
+        .splash-desc { color: #a0aec0; font-size: 1rem; line-height: 1.85; margin-bottom: 36px; }
+        .splash-btn { background: transparent; color: var(--gold-light); border: 2px solid var(--gold); padding: 14px 40px; font-family: var(--font-sans); font-size: 0.95rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); }
+        .splash-btn:hover { background: var(--gold); color: var(--navy); }
+        .splash-version { margin-top: 28px; font-size: 0.76rem; color: #4a5568; letter-spacing: 1px; }
+
+        /* LOADING */
+        .loading-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--blue), var(--gold)); z-index: 99999; transition: width 0.3s ease; }
+
+        /* HEADER */
+        .site-header { background: var(--navy); border-bottom: 3px solid var(--gold); position: sticky; top: 0; z-index: 100; }
+        .header-inner { max-width: 1100px; margin: 0 auto; padding: 16px 30px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+        .header-brand { display: flex; align-items: center; gap: 14px; }
+        .brand-logo { width: 46px; height: 46px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--navy); font-family: var(--font-serif); font-size: 1.5rem; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .brand-name { font-family: var(--font-serif); font-size: 1.55rem; color: var(--white); letter-spacing: 2px; line-height: 1.1; }
+        .brand-tagline { font-size: 0.72rem; color: var(--gold-light); letter-spacing: 1.5px; text-transform: uppercase; }
+        .header-nav { display: flex; gap: 8px; }
+        .nav-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #a0aec0; padding: 8px 18px; border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.85rem; cursor: pointer; transition: var(--transition); }
+        .nav-btn:hover, .nav-btn.active { background: var(--gold); border-color: var(--gold); color: var(--navy); font-weight: 600; }
+
+        /* MAIN */
+        .main-content { max-width: 1100px; margin: 0 auto; padding: 36px 30px 60px; display: flex; flex-direction: column; gap: 28px; }
+
+        /* STATS */
+        .stats-bar { background: var(--navy); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; padding: 20px 40px; gap: 30px; box-shadow: var(--shadow-md); }
+        .stat-item { text-align: center; }
+        .stat-number { display: block; font-family: var(--font-serif); font-size: 2rem; color: var(--gold-light); line-height: 1; }
+        .stat-label { display: block; font-size: 0.72rem; color: #a0aec0; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 4px; }
+        .stat-divider { width: 1px; height: 40px; background: rgba(255,255,255,0.12); }
+
+        /* PANEL */
+        .panel { background: var(--white); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); overflow: hidden; border: 1px solid var(--grey-3); }
+        .panel-header { padding: 26px 32px 20px; border-bottom: 1px solid var(--grey-3); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .panel-title { font-family: var(--font-serif); font-size: 1.45rem; color: var(--navy); display: flex; align-items: center; gap: 10px; }
+        .panel-subtitle { font-size: 0.85rem; color: var(--text-light); margin-top: 3px; }
+        .panel-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .word-badge { background: var(--navy); color: var(--gold-light); font-family: var(--font-sans); font-size: 0.78rem; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+
+        /* FORM */
+        .form-grid { padding: 26px 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 7px; }
+        .form-group--action { grid-column: span 2; display: flex; align-items: flex-end; justify-content: flex-start; }
+        .form-label { font-size: 0.78rem; font-weight: 600; color: var(--navy); letter-spacing: 0.5px; text-transform: uppercase; }
+        .optional { font-weight: 400; color: var(--grey-2); text-transform: none; font-size: 0.75rem; }
+        .form-input { padding: 11px 15px; border: 1.5px solid var(--grey-3); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.97rem; color: var(--text-dark); background: var(--cream); transition: var(--transition); outline: none; }
+        .form-input:focus { border-color: var(--blue); background: var(--white); box-shadow: 0 0 0 3px rgba(46,74,158,0.1); }
+
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; gap: 7px; padding: 11px 24px; border: none; border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn--primary { background: var(--navy); color: var(--white); }
+        .btn--primary:hover { background: var(--navy-mid); transform: translateY(-1px); }
+        .btn--secondary { background: transparent; border: 1.5px solid var(--navy); color: var(--navy); }
+        .btn--secondary:hover { background: var(--navy); color: var(--white); }
+        .search-input { padding: 9px 14px; border: 1.5px solid var(--grey-3); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.88rem; color: var(--text-dark); background: var(--cream); outline: none; width: 200px; transition: var(--transition); }
+        .search-input:focus { border-color: var(--blue); background: var(--white); }
+
+        /* TABLE */
+        .table-wrapper { overflow-x: auto; }
+        .word-table { width: 100%; border-collapse: collapse; }
+        .word-table thead th { background: var(--cream-dark); padding: 13px 20px; text-align: left; font-size: 0.72rem; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 1px; }
+        .word-table tbody td { padding: 14px 20px; border-bottom: 1px solid var(--grey-3); vertical-align: middle; font-size: 0.93rem; color: var(--text-mid); }
+        .word-table tbody tr:last-child td { border-bottom: none; }
+        .word-table tbody tr:hover td { background: rgba(245,242,234,0.7); }
+        .td-word { font-family: var(--font-serif); font-size: 1.05rem; color: var(--navy); font-weight: 600; }
+        .td-example { font-style: italic; color: var(--text-light); font-size: 0.87rem; }
+        .status-badge { padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
+        .status-learning { background: #eff6ff; color: var(--blue); border: 1px solid #bfdbfe; }
+        .status-mastered { background: #ecfdf5; color: var(--success); border: 1px solid #a7f3d0; }
+        .btn-delete { background: transparent; border: 1px solid #fca5a5; color: var(--danger); padding: 4px 10px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .btn-delete:hover { background: var(--danger); color: var(--white); border-color: var(--danger); }
+        .empty-state { text-align: center; padding: 50px 20px; }
+        .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .empty-title { font-family: var(--font-serif); font-size: 1.2rem; color: var(--navy); margin-bottom: 6px; }
+        .empty-sub { font-size: 0.85rem; color: var(--text-light); }
+
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(10,15,35,0.92); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-box { background: var(--white); border-radius: var(--radius-lg); padding: 36px 40px; width: 100%; max-width: 580px; box-shadow: var(--shadow-lg); position: relative; }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+        .modal-title { font-family: var(--font-serif); font-size: 1.4rem; color: var(--navy); }
+        .modal-subtitle { font-size: 0.83rem; color: var(--text-light); margin-top: 3px; }
+        .close-btn { background: var(--cream); border: 1px solid var(--grey-3); color: var(--text-mid); width: 34px; height: 34px; border-radius: 50%; font-size: 0.9rem; cursor: pointer; transition: var(--transition); }
+        .close-btn:hover { background: var(--danger); color: var(--white); border-color: var(--danger); }
+        .progress-track { height: 4px; background: var(--grey-3); border-radius: 4px; margin-bottom: 28px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--blue), var(--gold)); border-radius: 4px; transition: width 0.4s ease; }
+
+        /* CARD */
+        .card-scene { perspective: 1200px; height: 220px; cursor: pointer; margin-bottom: 28px; }
+        .flashcard { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.55s ease; }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 36px; text-align: center; }
+        .card-front { background: var(--navy); border: 2px solid var(--navy-mid); }
+        .card-back { background: linear-gradient(135deg, #1a3a5c, var(--navy)); border: 2px solid var(--blue); transform: rotateY(180deg); }
+        .card-tag { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 2px; color: var(--gold-light); margin-bottom: 14px; font-weight: 600; }
+        .card-word { font-family: var(--font-serif); font-size: 2.2rem; color: var(--white); margin-bottom: 16px; line-height: 1.2; }
+        .card-hint { font-size: 0.75rem; color: rgba(255,255,255,0.35); }
+        .card-meaning { font-size: 1.05rem; color: var(--white); line-height: 1.7; margin-bottom: 10px; }
+        .card-example { font-size: 0.82rem; color: rgba(255,255,255,0.5); font-style: italic; }
+        .modal-controls { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 18px; }
+        .ctrl-btn { background: var(--navy); color: var(--white); border: none; padding: 10px 22px; border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .ctrl-btn:hover:not(:disabled) { background: var(--blue); }
+        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .card-counter { font-family: var(--font-serif); font-size: 1.1rem; color: var(--navy); min-width: 70px; text-align: center; }
+        .modal-footer { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+        .tool-btn { background: var(--cream); border: 1px solid var(--grey-3); color: var(--text-mid); padding: 7px 16px; border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .tool-btn:hover { background: var(--cream-dark); border-color: var(--navy); color: var(--navy); }
+        .keyboard-hint { text-align: center; font-size: 0.72rem; color: var(--grey-2); }
+
+        /* NOTIFICATION */
+        .notification { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: var(--white); padding: 12px 20px; border-radius: var(--radius-sm); border-left: 4px solid var(--gold); font-size: 0.88rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s ease; z-index: 9000; pointer-events: none; max-width: 320px; box-shadow: var(--shadow-lg); }
+        .notification.show { opacity: 1; transform: translateY(0); }
+
+        /* FOOTER */
+        .site-footer { background: var(--navy); border-top: 2px solid var(--gold); text-align: center; padding: 18px; font-size: 0.76rem; color: #4a5568; letter-spacing: 0.5px; }
+
+        /* RESPONSIVE */
+        @media (max-width: 700px) {
+            .header-inner { flex-direction: column; align-items: flex-start; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group--action { grid-column: span 1; }
+            .panel-header { flex-direction: column; }
+            .stats-bar { padding: 16px 20px; gap: 16px; }
+            .modal-box { padding: 26px 22px; }
+            .main-content { padding: 20px 16px 40px; }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ═══════════════ SPLASH / WELCOME SCREEN ═══════════════ -->
-    <div class="splash" id="splash">
-        <div class="splash-inner">
-            <div class="splash-logo">L</div>
-            <h1 class="splash-title">Lexicon</h1>
-            <p class="splash-subtitle">A Personal Vocabulary Builder</p>
-            <div class="splash-divider"></div>
-            <p class="splash-desc">
-                Expand your command of the English language.<br>
-                Add words, study meanings, and master your vocabulary<br>
-                through intelligent flashcard revision.
-            </p>
-            <button class="splash-btn" onclick="enterApp()">Begin Study Session</button>
-            <p class="splash-version">Cambridge-Inspired Edition &nbsp;·&nbsp; v1.0</p>
-        </div>
+<div class="loading-bar" id="loadingBar" style="width:0%"></div>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+    <div class="splash-inner">
+        <div class="splash-logo">L</div>
+        <h1 class="splash-title">Lexicon</h1>
+        <p class="splash-subtitle">A Personal Vocabulary Builder</p>
+        <div class="splash-divider"></div>
+        <p class="splash-desc">
+            Expand your command of the English language.<br>
+            Add words, study meanings, and master your vocabulary<br>
+            through intelligent flashcard revision.
+        </p>
+        <button class="splash-btn" onclick="enterApp()">Begin Study Session</button>
+        <p class="splash-version">Cambridge-Inspired Edition &nbsp;·&nbsp; v2.0 — Cloud Powered</p>
     </div>
+</div>
 
-    <!-- ═══════════════ MAIN APP ═══════════════ -->
-    <div class="app hidden" id="app">
-
-        <!-- HEADER -->
-        <header class="site-header">
-            <div class="header-inner">
-                <div class="header-brand">
-                    <span class="brand-logo">L</span>
-                    <div>
-                        <h1 class="brand-name">Lexicon</h1>
-                        <p class="brand-tagline">Personal Vocabulary Builder</p>
-                    </div>
-                </div>
-                <nav class="header-nav">
-                    <button class="nav-btn active" onclick="showSection('words')">Word List</button>
-                    <button class="nav-btn" onclick="startFlashcards()">Study Cards</button>
-                </nav>
-            </div>
-        </header>
-
-        <main class="main-content">
-
-            <!-- HERO STATS BAR -->
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <span class="stat-number" id="totalWords">0</span>
-                    <span class="stat-label">Words Added</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-number" id="todayWords">0</span>
-                    <span class="stat-label">Added Today</span>
-                </div>
-                <div class="stat-divider"></div>
-                <div class="stat-item">
-                    <span class="stat-number" id="masteredWords">0</span>
-                    <span class="stat-label">Mastered</span>
+<!-- MAIN APP -->
+<div class="app hidden" id="app">
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="header-brand">
+                <span class="brand-logo">L</span>
+                <div>
+                    <h1 class="brand-name">Lexicon</h1>
+                    <p class="brand-tagline">Personal Vocabulary Builder</p>
                 </div>
             </div>
+            <nav class="header-nav">
+                <button class="nav-btn active" onclick="showSection(event)">Word List</button>
+                <button class="nav-btn" onclick="startFlashcards()">Study Cards</button>
+            </nav>
+        </div>
+    </header>
 
-            <!-- ADD WORD PANEL -->
-            <section class="panel add-panel">
-                <div class="panel-header">
+    <main class="main-content">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-number" id="totalWords">0</span>
+                <span class="stat-label">Words Added</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-number" id="todayWords">0</span>
+                <span class="stat-label">Added Today</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-number" id="masteredWords">0</span>
+                <span class="stat-label">Mastered</span>
+            </div>
+        </div>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
                     <h2 class="panel-title">Add New Entry</h2>
                     <p class="panel-subtitle">Record a new word and its definition to your personal lexicon</p>
                 </div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label" for="wordInput">English Word</label>
-                        <input class="form-input" id="wordInput" type="text"
-                               placeholder="e.g. Ephemeral" autocomplete="off"/>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="meaningInput">Definition</label>
-                        <input class="form-input" id="meaningInput" type="text"
-                               placeholder="e.g. Lasting for a very short time"/>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="exampleInput">Example Sentence <span class="optional">(optional)</span></label>
-                        <input class="form-input" id="exampleInput" type="text"
-                               placeholder="e.g. Fame in this industry is ephemeral."/>
-                    </div>
-                    <div class="form-group form-group--action">
-                        <button class="btn btn--primary" onclick="addWord()">
-                            <span class="btn-icon">+</span> Add to Lexicon
-                        </button>
-                    </div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="wordInput">English Word</label>
+                    <input class="form-input" id="wordInput" type="text" placeholder="e.g. Ephemeral" autocomplete="off"/>
                 </div>
-            </section>
-
-            <!-- WORD LIST PANEL -->
-            <section class="panel list-panel" id="wordsSection">
-                <div class="panel-header">
-                    <div>
-                        <h2 class="panel-title">My Vocabulary <span class="word-badge" id="wordCount">0</span></h2>
-                        <p class="panel-subtitle">Your personal collection of words and definitions</p>
-                    </div>
-                    <div class="panel-actions">
-                        <input class="search-input" id="searchInput" type="text"
-                               placeholder="Search words..." oninput="filterWords()"/>
-                        <button class="btn btn--secondary" onclick="startFlashcards()">
-                            🃏 Study Flashcards
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label" for="meaningInput">Definition</label>
+                    <input class="form-input" id="meaningInput" type="text" placeholder="e.g. Lasting for a very short time"/>
                 </div>
-
-                <div class="table-wrapper">
-                    <table class="word-table">
-                        <thead>
-                            <tr>
-                                <th class="th-word">Word</th>
-                                <th class="th-meaning">Definition</th>
-                                <th class="th-example">Example</th>
-                                <th class="th-status">Status</th>
-                                <th class="th-action">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tableBody">
-                            <tr class="empty-row">
-                                <td colspan="5">
-                                    <div class="empty-state">
-                                        <div class="empty-icon">📖</div>
-                                        <p class="empty-title">Your lexicon is empty</p>
-                                        <p class="empty-sub">Begin by adding your first word above</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="form-group">
+                    <label class="form-label" for="exampleInput">Example Sentence <span class="optional">(optional)</span></label>
+                    <input class="form-input" id="exampleInput" type="text" placeholder="e.g. Fame in this industry is ephemeral."/>
                 </div>
-            </section>
+                <div class="form-group form-group--action">
+                    <button class="btn btn--primary" onclick="addWord()">
+                        <span>+</span> Add to Lexicon
+                    </button>
+                </div>
+            </div>
+        </section>
 
-        </main>
-
-        <footer class="site-footer">
-            <p>Lexicon &copy; 2025 &nbsp;·&nbsp; Cambridge-Inspired Vocabulary Builder &nbsp;·&nbsp; All entries saved locally</p>
-        </footer>
-
-    </div>
-
-    <!-- ═══════════════ FLASHCARD MODAL ═══════════════ -->
-    <div class="modal-overlay" id="modal">
-        <div class="modal-box">
-
-            <div class="modal-header">
+        <section class="panel">
+            <div class="panel-header">
                 <div>
-                    <h2 class="modal-title">Flashcard Study Session</h2>
-                    <p class="modal-subtitle" id="deckInfo">Loading deck...</p>
+                    <h2 class="panel-title">My Vocabulary <span class="word-badge" id="wordCount">0</span></h2>
+                    <p class="panel-subtitle">Your personal collection of words and definitions</p>
                 </div>
-                <button class="close-btn" onclick="closeFlashcards()">✕</button>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="progress-track">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-
-            <!-- Card -->
-            <div class="card-scene" onclick="flipCard()">
-                <div class="flashcard" id="flashcard">
-                    <div class="card-face card-front">
-                        <span class="card-tag">Word</span>
-                        <h2 class="card-word" id="frontText"></h2>
-                        <p class="card-hint">Click the card to reveal the definition</p>
-                    </div>
-                    <div class="card-face card-back">
-                        <span class="card-tag">Definition</span>
-                        <p class="card-meaning" id="backText"></p>
-                        <p class="card-example" id="backExample"></p>
-                    </div>
+                <div class="panel-actions">
+                    <input class="search-input" id="searchInput" type="text" placeholder="Search words..." oninput="filterWords()"/>
+                    <button class="btn btn--secondary" onclick="startFlashcards()">🃏 Study Flashcards</button>
                 </div>
             </div>
-
-            <!-- Controls -->
-            <div class="modal-controls">
-                <button class="ctrl-btn" id="prevBtn" onclick="prevCard()">← Previous</button>
-                <span class="card-counter" id="counter">1 / 1</span>
-                <button class="ctrl-btn" id="nextBtn" onclick="nextCard()">Next →</button>
+            <div class="table-wrapper">
+                <table class="word-table">
+                    <thead>
+                        <tr>
+                            <th>Word</th>
+                            <th>Definition</th>
+                            <th>Example</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-icon">⏳</div>
+                                <p class="empty-title">Loading your lexicon...</p>
+                                <p class="empty-sub">Connecting to cloud database</p>
+                            </div>
+                        </td></tr>
+                    </tbody>
+                </table>
             </div>
+        </section>
+    </main>
 
-            <div class="modal-footer">
-                <button class="tool-btn" onclick="shuffleCards()">🔀 Shuffle</button>
-                <button class="tool-btn" onclick="markMastered()">✓ Mark as Mastered</button>
-                <button class="tool-btn" onclick="resetDeck()">↺ Restart</button>
+    <footer class="site-footer">
+        <p>Lexicon &copy; 2025 &nbsp;·&nbsp; Cambridge-Inspired Vocabulary Builder &nbsp;·&nbsp; ☁️ Cloud Powered</p>
+    </footer>
+</div>
+
+<!-- FLASHCARD MODAL -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div>
+                <h2 class="modal-title">Flashcard Study Session</h2>
+                <p class="modal-subtitle" id="deckInfo">Loading deck...</p>
             </div>
-
-            <p class="keyboard-hint">
-                ← → Navigate &nbsp;|&nbsp; Space / Enter to Flip &nbsp;|&nbsp; M to Mark Mastered &nbsp;|&nbsp; Esc to Close
-            </p>
-
+            <button class="close-btn" onclick="closeFlashcards()">✕</button>
         </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="card-scene" onclick="flipCard()">
+            <div class="flashcard" id="flashcard">
+                <div class="card-face card-front">
+                    <span class="card-tag">Word</span>
+                    <h2 class="card-word" id="frontText"></h2>
+                    <p class="card-hint">Click the card to reveal the definition</p>
+                </div>
+                <div class="card-face card-back">
+                    <span class="card-tag">Definition</span>
+                    <p class="card-meaning" id="backText"></p>
+                    <p class="card-example" id="backExample"></p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-controls">
+            <button class="ctrl-btn" id="prevBtn" onclick="prevCard()">← Previous</button>
+            <span class="card-counter" id="counter">1 / 1</span>
+            <button class="ctrl-btn" id="nextBtn" onclick="nextCard()">Next →</button>
+        </div>
+        <div class="modal-footer">
+            <button class="tool-btn" onclick="shuffleCards()">🔀 Shuffle</button>
+            <button class="tool-btn" onclick="markMastered()">✓ Mark as Mastered</button>
+            <button class="tool-btn" onclick="resetDeck()">↺ Restart</button>
+        </div>
+        <p class="keyboard-hint">← → Navigate &nbsp;|&nbsp; Space to Flip &nbsp;|&nbsp; Esc to Close</p>
     </div>
+</div>
 
-    <!-- NOTIFICATION -->
-    <div class="notification" id="notif"></div>
+<div class="notification" id="notif"></div>
 
-    <script src="script.js"></script>
+<script>
+    /* ══════════════════════════════════════
+       🔑 SUPABASE CONFIG
+       Replace with YOUR keys from supabase.com
+    ══════════════════════════════════════ */
+    const SUPABASE_URL  = 'https://xyzxyz.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6...';
+
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    /* ── STATE ── */
+    let words     = [];
+    let deck      = [];
+    let cardIndex = 0;
+    let flipped   = false;
+    let audioCtx  = null;
+    const today   = new Date().toDateString();
+
+    /* ══════════════════════════════════════
+       SPLASH
+    ══════════════════════════════════════ */
+    function enterApp() {
+        const splash = document.getElementById('splash');
+        const app    = document.getElementById('app');
+        splash.classList.add('fade-out');
+        setTimeout(() => {
+            splash.style.display = 'none';
+            app.classList.remove('hidden');
+            loadWords();
+        }, 700);
+    }
+
+    /* ══════════════════════════════════════
+       LOAD WORDS FROM SUPABASE
+    ══════════════════════════════════════ */
+    async function loadWords() {
+        showLoading(30);
+        const { data, error } = await db
+            .from('words')
+            .select('*')
+            .order('id', { ascending: false });
+
+        showLoading(100);
+
+        if (error) {
+            notify('⚠  Could not connect to database. Check your keys.');
+            console.error(error);
+            return;
+        }
+
+        words = data || [];
+        renderTable();
+        renderStats();
+        setTimeout(() => hideLoading(), 400);
+    }
+
+    /* ══════════════════════════════════════
+       ADD WORD
+    ══════════════════════════════════════ */
+    async function addWord() {
+        const wEl     = document.getElementById('wordInput');
+        const mEl     = document.getElementById('meaningInput');
+        const eEl     = document.getElementById('exampleInput');
+        const word    = wEl.value.trim();
+        const meaning = mEl.value.trim();
+        const example = eEl.value.trim();
+
+        if (!word || !meaning) {
+            notify('⚠  Please provide both a word and its definition.');
+            return;
+        }
+        if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) {
+            notify('⚠  This word already exists in your lexicon.');
+            return;
+        }
+
+        showLoading(50);
+
+        const { data, error } = await db
+            .from('words')
+            .insert([{ word, meaning, example, mastered: false, dateAdded: today }])
+            .select();
+
+        if (error) {
+            notify('⚠  Could not save word. Please try again.');
+            console.error(error);
+            hideLoading();
+            return;
+        }
+
+        words.unshift(data[0]);
+        renderTable();
+        renderStats();
+        wEl.value = ''; mEl.value = ''; eEl.value = '';
+        wEl.focus();
+        notify(`✓  "${word}" has been added to your lexicon.`);
+        showLoading(100);
+        setTimeout(hideLoading, 300);
+    }
+
+    /* ══════════════════════════════════════
+       DELETE WORD
+    ══════════════════════════════════════ */
+    async function deleteWord(id) {
+        const word = words.find(w => w.id === id);
+        const { error } = await db.from('words').delete().eq('id', id);
+        if (error) { notify('⚠  Could not delete word.'); return; }
+        words = words.filter(w => w.id !== id);
+        renderTable();
+        renderStats();
+        if (word) notify(`"${word.word}" has been removed.`);
+    }
+
+    /* ══════════════════════════════════════
+       TOGGLE MASTERED
+    ══════════════════════════════════════ */
+    async function toggleMastered(id) {
+        const w = words.find(x => x.id === id);
+        if (!w) return;
+        const newVal = !w.mastered;
+        const { error } = await db.from('words').update({ mastered: newVal }).eq('id', id);
+        if (error) { notify('⚠  Could not update status.'); return; }
+        w.mastered = newVal;
+        renderTable();
+        renderStats();
+        notify(newVal ? `✓  "${w.word}" marked as mastered.` : `"${w.word}" moved back to learning.`);
+    }
+
+    /* ══════════════════════════════════════
+       RENDER
+    ══════════════════════════════════════ */
+    function renderTable(list = words) {
+        document.getElementById('wordCount').textContent = words.length;
+        const body = document.getElementById('tableBody');
+        if (list.length === 0) {
+            body.innerHTML = `<tr><td colspan="5"><div class="empty-state">
+                <div class="empty-icon">📖</div>
+                <p class="empty-title">Your lexicon is empty</p>
+                <p class="empty-sub">Begin by adding your first word above</p>
+            </div></td></tr>`;
+            return;
+        }
+        body.innerHTML = list.map(w => `
+            <tr>
+                <td class="td-word">${esc(w.word)}</td>
+                <td>${esc(w.meaning)}</td>
+                <td class="td-example">${w.example ? esc(w.example) : '<span style="color:#ccc">—</span>'}</td>
+                <td><span class="status-badge ${w.mastered ? 'status-mastered' : 'status-learning'}"
+                    onclick="toggleMastered(${w.id})">
+                    ${w.mastered ? '✓ Mastered' : '◉ Learning'}
+                </span></td>
+                <td><button class="btn-delete" onclick="deleteWord(${w.id})">Remove</button></td>
+            </tr>`).join('');
+    }
+
+    function renderStats() {
+        document.getElementById('totalWords').textContent    = words.length;
+        document.getElementById('todayWords').textContent    = words.filter(w => w.dateAdded === today).length;
+        document.getElementById('masteredWords').textContent = words.filter(w => w.mastered).length;
+    }
+
+    function filterWords() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        renderTable(words.filter(w =>
+            w.word.toLowerCase().includes(q) ||
+            w.meaning.toLowerCase().includes(q)
+        ));
+    }
+
+    /* ══════════════════════════════════════
+       FLASHCARDS
+    ══════════════════════════════════════ */
+    function startFlashcards() {
+        if (words.length === 0) { notify('⚠  Please add words before starting a study session.'); return; }
+        deck = [...words]; cardIndex = 0;
+        document.getElementById('modal').classList.add('active');
+        showCard();
+    }
+
+    function showCard() {
+        const c = deck[cardIndex];
+        document.getElementById('frontText').textContent   = c.word;
+        document.getElementById('backText').textContent    = c.meaning;
+        document.getElementById('backExample').textContent = c.example ? `"${c.example}"` : '';
+        document.getElementById('counter').textContent     = `${cardIndex + 1} / ${deck.length}`;
+        document.getElementById('deckInfo').textContent    = `${deck.length} card${deck.length > 1 ? 's' : ''} in session`;
+        document.getElementById('progressFill').style.width = ((cardIndex + 1) / deck.length * 100) + '%';
+        flipped = false;
+        document.getElementById('flashcard').classList.remove('flipped');
+        document.getElementById('prevBtn').disabled = cardIndex === 0;
+        document.getElementById('nextBtn').disabled = cardIndex === deck.length - 1;
+    }
+
+    function flipCard() {
+        flipped = !flipped;
+        document.getElementById('flashcard').classList.toggle('flipped');
+        playFlipSound();
+    }
+
+    function prevCard()    { if (cardIndex > 0) { cardIndex--; showCard(); } }
+    function nextCard()    { if (cardIndex < deck.length - 1) { cardIndex++; showCard(); } }
+    function shuffleCards(){ deck = deck.sort(() => Math.random() - 0.5); cardIndex = 0; showCard(); notify('🔀  Cards shuffled.'); }
+    function resetDeck()   { deck = [...words]; cardIndex = 0; showCard(); notify('↺  Deck restarted.'); }
+    function closeFlashcards() { document.getElementById('modal').classList.remove('active'); }
+
+    async function markMastered() {
+        const w = words.find(x => x.id === deck[cardIndex].id);
+        if (w && !w.mastered) {
+            await toggleMastered(w.id);
+            notify(`✓  "${w.word}" marked as mastered.`);
+        }
+    }
+
+    /* ══════════════════════════════════════
+       KEYBOARD
+    ══════════════════════════════════════ */
+    document.getElementById('wordInput').addEventListener('keydown',   e => { if (e.key === 'Enter') document.getElementById('meaningInput').focus(); });
+    document.getElementById('meaningInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('exampleInput').focus(); });
+    document.getElementById('exampleInput').addEventListener('keydown', e => { if (e.key === 'Enter') addWord(); });
+
+    document.addEventListener('keydown', e => {
+        if (!document.getElementById('modal').classList.contains('active')) return;
+        if (e.key === 'ArrowLeft')  prevCard();
+        else if (e.key === 'ArrowRight') nextCard();
+        else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+        else if (e.key === 'm' || e.key === 'M') markMastered();
+        else if (e.key === 'Escape') closeFlashcards();
+    });
+
+    /* ══════════════════════════════════════
+       SOUND
+    ══════════════════════════════════════ */
+    function getAudioCtx() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+    function playFlipSound() {
+        try {
+            const ctx = getAudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(700, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 0.18);
+            gain.gain.setValueAtTime(0.22, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.28);
+        } catch (_) {}
+    }
+
+    /* ══════════════════════════════════════
+       LOADING BAR
+    ══════════════════════════════════════ */
+    function showLoading(pct) { document.getElementById('loadingBar').style.width = pct + '%'; }
+    function hideLoading()    { document.getElementById('loadingBar').style.width = '0%'; }
+
+    /* ══════════════════════════════════════
+       NOTIFICATION
+    ══════════════════════════════════════ */
+    let notifTimer;
+    function notify(msg) {
+        const el = document.getElementById('notif');
+        el.textContent = msg; el.classList.add('show');
+        clearTimeout(notifTimer);
+        notifTimer = setTimeout(() => el.classList.remove('show'), 3000);
+    }
+
+    /* ══════════════════════════════════════
+       HELPERS
+    ══════════════════════════════════════ */
+    function esc(str) {
+        const d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+
+    function showSection(event) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+</script>
 </body>
 </html>
