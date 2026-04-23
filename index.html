@@ -338,7 +338,7 @@
        Replace with YOUR keys from supabase.com
     ══════════════════════════════════════ */
     const SUPABASE_URL  = 'https://rciqjzagiekcxqspwsjh.supabase.co';
-const SUPABASE_KEY  = 'sb_publishable_dJnBt674Jrikr2ubgIB_Rg_lt8bxI0D';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaXFqemFnaWVrY3hxc3B3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMDE4MDQsImV4cCI6MjA5MDY3NzgwNH0.fD_zJgZbcWAaeYDY0lp7sIEjiAXEGlhFLha1DWVD4DA';
 
     const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -412,7 +412,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
         showLoading(50);
 
         const { data, error } = await db
-            .from('words')
+            .from('word')
             .insert([{ word, meaning, example, mastered: false, dateAdded: today }])
             .select();
 
@@ -438,7 +438,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
     ══════════════════════════════════════ */
     async function deleteWord(id) {
         const word = words.find(w => w.id === id);
-        const { error } = await db.from('words').delete().eq('id', id);
+        const { error } = await db.from('word').delete().eq('id', id);
         if (error) { notify('⚠  Could not delete word.'); return; }
         words = words.filter(w => w.id !== id);
         renderTable();
@@ -453,7 +453,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
         const w = words.find(x => x.id === id);
         if (!w) return;
         const newVal = !w.mastered;
-        const { error } = await db.from('words').update({ mastered: newVal }).eq('id', id);
+        const { error } = await db.from('word').update({ mastered: newVal }).eq('id', id);
         if (error) { notify('⚠  Could not update status.'); return; }
         w.mastered = newVal;
         renderTable();
