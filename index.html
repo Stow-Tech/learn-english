@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -257,6 +258,7 @@
                 <div class="panel-actions">
                     <input class="search-input" id="searchInput" type="text" placeholder="Search words..." oninput="filterWords()"/>
                     <button class="btn btn--secondary" onclick="startFlashcards()">🃏 Study Flashcards</button>
+                    <button class="btn btn--secondary" onclick="exportToExcel()">📥 Export to Excel</button>
                 </div>
             </div>
             <div class="table-wrapper">
@@ -335,13 +337,12 @@
 <script>
     /* ══════════════════════════════════════
        🔑 SUPABASE CONFIG
-       Replace with YOUR keys from supabase.com
     ══════════════════════════════════════ */
-    const SUPABASE_URL  = 'https://rciqjzagiekcxqspwsjh.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaXFqemFnaWVrY3hxc3B3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMDE4MDQsImV4cCI6MjA5MDY3NzgwNH0.fD_zJgZbcWAaeYDY0lp7sIEjiAXEGlhFLha1DWVD4DA';
+    const SUPABASE_URL = 'https://rciqjzagiekcxqspwsjh.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjaXFqemFnaWVrY3hxc3B3c2poIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxMDE4MDQsImV4cCI6MjA5MDY3NzgwNH0.fD_zJgZbcWAaeYDY0lp7sIEjiAXEGlhFLha1DWVD4DA';
 
     const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     /* ── STATE ── */
     let words     = [];
@@ -503,6 +504,40 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
     }
 
     /* ══════════════════════════════════════
+       EXCEL EXPORT
+    ══════════════════════════════════════ */
+    function exportToExcel() {
+        if (words.length === 0) {
+            notify('⚠  No words to export.');
+            return;
+        }
+
+        const data = words.map(w => ({
+            'Word':             w.word,
+            'Definition':       w.meaning,
+            'Example Sentence': w.example || '',
+            'Status':           w.mastered ? 'Mastered' : 'Learning',
+            'Date Added':       w.dateAdded || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Lexicon');
+
+        // Set column widths for readability
+        ws['!cols'] = [
+            { wch: 22 },  // Word
+            { wch: 45 },  // Definition
+            { wch: 55 },  // Example Sentence
+            { wch: 14 },  // Status
+            { wch: 16 }   // Date Added
+        ];
+
+        XLSX.writeFile(wb, 'Lexicon_Vocabulary.xlsx');
+        notify('✓  Vocabulary exported to Excel!');
+    }
+
+    /* ══════════════════════════════════════
        FLASHCARDS
     ══════════════════════════════════════ */
     function startFlashcards() {
@@ -549,17 +584,17 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
     /* ══════════════════════════════════════
        KEYBOARD
     ══════════════════════════════════════ */
-    document.getElementById('wordInput').addEventListener('keydown',   e => { if (e.key === 'Enter') document.getElementById('meaningInput').focus(); });
+    document.getElementById('wordInput').addEventListener('keydown',    e => { if (e.key === 'Enter') document.getElementById('meaningInput').focus(); });
     document.getElementById('meaningInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('exampleInput').focus(); });
     document.getElementById('exampleInput').addEventListener('keydown', e => { if (e.key === 'Enter') addWord(); });
 
     document.addEventListener('keydown', e => {
         if (!document.getElementById('modal').classList.contains('active')) return;
-        if (e.key === 'ArrowLeft')  prevCard();
+        if (e.key === 'ArrowLeft')       prevCard();
         else if (e.key === 'ArrowRight') nextCard();
         else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
-        else if (e.key === 'm' || e.key === 'M') markMastered();
-        else if (e.key === 'Escape') closeFlashcards();
+        else if (e.key === 'm' || e.key === 'M')     markMastered();
+        else if (e.key === 'Escape')                 closeFlashcards();
     });
 
     /* ══════════════════════════════════════
@@ -571,8 +606,8 @@ const db = createClient(SUPABASE_URL, SUPABASE_KEY);
     }
     function playFlipSound() {
         try {
-            const ctx = getAudioCtx();
-            const osc = ctx.createOscillator();
+            const ctx  = getAudioCtx();
+            const osc  = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain); gain.connect(ctx.destination);
             osc.type = 'sine';
